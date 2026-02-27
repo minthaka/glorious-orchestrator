@@ -2,51 +2,45 @@ pipeline {
     agent any
 
     tools {
-        // This name MUST match what you configured in
-        // Manage Jenkins -> Tools -> Maven Installations
         maven 'Maven 3.9.12'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Grabs the code from the Git repo linked to the job
                 checkout scm
             }
         }
 
         stage('Build & Compile') {
-                    steps {
-                        // We compile first so the .class files exist for Sonar
-                        sh 'mvn clean compile'
-                    }
-                }
+            steps {
+                // Generates the .class files needed for SonarQube
+                sh 'mvn clean compile'
+            }
+        }
 
         stage('Code Quality (SonarQube)') {
             steps {
                 script {
-                    // 'MySonarServer' must match the name in
-                    // Manage Jenkins -> System -> SonarQube servers
-                    // The URL there should be http://sonarqube-local:9000
                     withSonarQubeEnv('MySonarServer') {
+                        // Using your specific token
                         sh 'mvn sonar:sonar -Dsonar.token=squ_1bda44233ed6c1648ef650740f90f74e42678bdf'
                     }
                 }
             }
         }
 
-        stage('Build & Unit Tests') {
+        stage('Build, Test & Install') {
             steps {
-                // Compiles code and runs JUnit tests
-                // We use -DskipTests=false to ensure quality
-                sh 'mvn clean package -DskipTests=false'
+                // CHANGE: Use 'install' instead of 'package'
+                // This "publishes" the JAR to the local .m2 cache so other
+                // projects (like the orchestrator) can use it as a dependency.
+                sh 'mvn install -DskipTests=false'
             }
         }
 
         stage('Archive Artifacts') {
             steps {
-                // This saves the resulting JAR so you can
-                // download it from the Jenkins UI
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
@@ -54,10 +48,10 @@ pipeline {
 
     post {
         success {
-            echo 'Build, Quality Check, and Archiving completed successfully!'
+            echo 'Build, Quality Check, and Local Install completed successfully!'
         }
         failure {
-            echo 'Something went wrong. Check the console output above.'
+            echo 'Build failed. Check the console output.'
         }
     }
 }
