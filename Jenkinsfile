@@ -15,6 +15,13 @@ pipeline {
             }
         }
 
+        stage('Build & Compile') {
+                    steps {
+                        // We compile first so the .class files exist for Sonar
+                        sh 'mvn clean compile'
+                    }
+                }
+
         stage('Code Quality (SonarQube)') {
             steps {
                 script {
@@ -32,7 +39,7 @@ pipeline {
             steps {
                 // Compiles code and runs JUnit tests
                 // We use -DskipTests=false to ensure quality
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests=false'
             }
         }
 
