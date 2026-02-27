@@ -22,7 +22,7 @@ pipeline {
                     // Manage Jenkins -> System -> SonarQube servers
                     // The URL there should be http://sonarqube-local:9000
                     withSonarQubeEnv('MySonarServer') {
-                        sh 'mvn sonar:sonar'
+                        sh 'mvn sonar:sonar -Dsonar.token=squ_1bda44233ed6c1648ef650740f90f74e42678bdf'
                     }
                 }
             }
